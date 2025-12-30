@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useApiKey } from '../contexts/ApiKeyContext.tsx';
 
 const SubjectScreen: React.FC = () => {
@@ -66,7 +66,7 @@ const SubjectScreen: React.FC = () => {
             setPrompt("과목을 먼저 선택해주세요.");
             return;
         }
-        
+
         setIsLoading(true);
         setPrompt("");
 
@@ -74,8 +74,8 @@ const SubjectScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const ai = new GoogleGenAI({ apiKey: apiKey });
-            
+            const genAI = new GoogleGenerativeAI(apiKey);
+
             const inputData = `
 [과목 정보]
 - 과목명: ${subject}
@@ -118,17 +118,15 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
 예시 분량 감각 (약 500자 목표):
 (입력: 미적분 문제 풀이 잘함) -> (출력: '도함수의 활용' 단원을 학습하며... (중략) ... 이를 통해 수학적 모델링 역량을 증명하였으며 향후 공학 분야에서의 응용 가능성이 매우 높음.)`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: inputData,
-                config: {
-                    systemInstruction: systemInstruction,
-                    temperature: 0.9, // Increased for variety
-                    maxOutputTokens: 2000,
-                }
+            const model = genAI.getGenerativeModel({
+                model: "gemini-1.5-flash",
+                systemInstruction: systemInstruction,
             });
 
-            setPrompt(response.text || "생성된 내용이 없습니다.");
+            const response = await model.generateContent(inputData);
+            const text = response.response.text();
+
+            setPrompt(text || "생성된 내용이 없습니다.");
         } catch (error) {
             console.error("AI Generation Error:", error);
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
@@ -155,14 +153,14 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden transition-colors duration-200">
-            <Header 
-                title="세특 도우미" 
-                icon="menu_book" 
-                colorClass="text-s2-primary dark:text-emerald-400" 
+            <Header
+                title="세특 도우미"
+                icon="menu_book"
+                colorClass="text-s2-primary dark:text-emerald-400"
                 bgClass="bg-emerald-100 dark:bg-emerald-900/30"
                 backLink={true}
             />
-            
+
             <div className="flex flex-1 justify-center w-full">
                 <div className="flex flex-col max-w-[1280px] w-full px-4 md:px-10 pb-20 pt-8">
                     <div className="mb-10 text-center space-y-3">
@@ -174,7 +172,7 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                             교과 세부능력 및 특기사항 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-s2-primary">AI 생성기</span>
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto font-normal">
-                            과목별 수업 활동과 학생의 성장을 구체적으로 기록하세요.<br className="hidden md:block"/> 
+                            과목별 수업 활동과 학생의 성장을 구체적으로 기록하세요.<br className="hidden md:block" />
                             AI가 명사형 어미와 학업 역량 중심의 완성된 세특을 작성해 드립니다.
                         </p>
                     </div>
@@ -188,7 +186,7 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                         과목 선택 <span className="text-red-500">*</span>
                                     </label>
                                     <div className="relative">
-                                        <select 
+                                        <select
                                             value={subject}
                                             onChange={(e) => setSubject(e.target.value)}
                                             style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
@@ -223,15 +221,15 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
                                     학생이 수업 시간에 보여준 태도나 습관을 기록해주세요. 키워드를 클릭하여 추가할 수 있습니다.
                                 </label>
-                                <textarea 
+                                <textarea
                                     value={attitude}
                                     onChange={(e) => setAttitude(e.target.value)}
-                                    className="w-full h-24 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s2-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed mb-4" 
+                                    className="w-full h-24 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s2-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed mb-4"
                                     placeholder="예: 수업 시작 전 교과서를 미리 준비하고, 교사의 설명에 집중하여 경청함."
                                 ></textarea>
                                 <div className="flex flex-wrap gap-2">
                                     {attitudeKeywords.map(item => (
-                                        <button 
+                                        <button
                                             key={item}
                                             onClick={() => addAttitude(item)}
                                             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300 transition-colors"
@@ -247,7 +245,7 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <h3 className="text-slate-900 dark:text-white font-bold text-lg">
-                                            평가 및 활동 내용 
+                                            평가 및 활동 내용
                                             <span className="text-sm font-normal text-slate-500 ml-2">
                                                 ({subject ? `${subject} 핵심 역량` : "우수성"})
                                             </span>
@@ -257,15 +255,15 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
                                         수행평가 주제, 탐구 내용, 그리고 학생의 우수성(특기사항)을 입력해주세요.
                                     </label>
-                                    <textarea 
+                                    <textarea
                                         value={details}
                                         onChange={(e) => setDetails(e.target.value)}
-                                        className="w-full h-32 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s2-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed mb-4" 
+                                        className="w-full h-32 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s2-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed mb-4"
                                         placeholder="예: 수행평가 주제로 '기후 변화의 심각성'을 선정하여 PPT를 제작하고 발표함. 데이터 분석 능력이 뛰어남."
                                     ></textarea>
                                     <div className="flex flex-wrap gap-2">
                                         {currentExcellenceKeywords.map(item => (
-                                            <button 
+                                            <button
                                                 key={item}
                                                 onClick={() => addDetailKeyword(item)}
                                                 className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300 transition-colors animate-fade-in"
@@ -285,7 +283,7 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                     </div>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">trending_up</span>
-                                        <select 
+                                        <select
                                             value={focus}
                                             onChange={(e) => setFocus(e.target.value)}
                                             style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
@@ -299,8 +297,8 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                     </div>
                                 </div>
                             </div>
-                            
-                            <button 
+
+                            <button
                                 onClick={handleGenerate}
                                 disabled={isLoading}
                                 className="w-full py-5 bg-s2-primary hover:bg-s2-primary-dark disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-[1.01] active:scale-[0.99] text-lg flex items-center justify-center gap-3 group mt-4"
@@ -319,8 +317,8 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                             </button>
                         </div>
 
-                        <ResultPanel 
-                            promptText={prompt} 
+                        <ResultPanel
+                            promptText={prompt}
                             setPromptText={setPrompt}
                             isLoading={isLoading}
                             onReset={handleReset}
@@ -330,10 +328,10 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                 <>
                                     <p><span className="text-purple-400">AI Role:</span> 교과 세특 작성 전문가</p>
                                     <p><span className="text-blue-400">Structure:</span> 동기 → 탐구 → 결과 → 심화</p>
-                                    <p><span className="text-emerald-400">Check:</span><br/>
-                                    - 명사형 어미(~함.) 및 마침표<br/>
-                                    - 학생별 개별화/차별화 적용<br/>
-                                    - 학업 역량 구체화</p>
+                                    <p><span className="text-emerald-400">Check:</span><br />
+                                        - 명사형 어미(~함.) 및 마침표<br />
+                                        - 학생별 개별화/차별화 적용<br />
+                                        - 학업 역량 구체화</p>
                                     <p className="text-slate-500 mt-2 text-xs">※ 생성된 내용은 참고용으로 활용하시고, 반드시 선생님의 검토를 거쳐 나이스에 입력해주세요.</p>
                                 </>
                             }

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { ActivityType } from '../types';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useApiKey } from '../contexts/ApiKeyContext.tsx';
+import { ActivityType } from '../types';
 
 interface ActivityItem {
     id: number;
@@ -17,7 +17,7 @@ const CreativeScreen: React.FC = () => {
     const [prompt, setPrompt] = useState("");
     // Default to '자율활동'. '봉사활동' is removed.
     const [activityType, setActivityType] = useState<ActivityType>("자율활동");
-    
+
     // List State
     const [activities, setActivities] = useState<ActivityItem[]>([]);
 
@@ -25,7 +25,7 @@ const CreativeScreen: React.FC = () => {
     const [currentDate, setCurrentDate] = useState("");
     const [currentName, setCurrentName] = useState("");
     const [currentContent, setCurrentContent] = useState("");
-    
+
     const [isLoading, setIsLoading] = useState(false);
 
     // Helper to check if current mode is Club Activity
@@ -54,7 +54,7 @@ const CreativeScreen: React.FC = () => {
                 return;
             }
         }
-        
+
         // Content is always required now (since Club has no Name to generate from)
         if (!currentContent) {
             alert("활동 내용을 입력해주세요.");
@@ -69,7 +69,7 @@ const CreativeScreen: React.FC = () => {
         };
 
         setActivities([...activities, newItem]);
-        
+
         // Reset inputs
         setCurrentDate("");
         setCurrentName("");
@@ -98,8 +98,8 @@ const CreativeScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const ai = new GoogleGenAI({ apiKey: apiKey });
-            
+            const genAI = new GoogleGenerativeAI(apiKey);
+
             // Construct input data from the list
             const activitiesData = activities.map((item, index) => {
                 if (isClub) {
@@ -162,17 +162,15 @@ ${activitiesData}
 (자율/진로활동 예시 - 날짜, 활동명 포함)
 수학여행(2025.06.04.-2025.06.06.)에서 베트남 다낭과 호이안의 문화유산을 탐방하며... (중략) ...공동체 의식을 함양함. AI 진로 캠프(2025.05.20.)에 참여하여...`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: inputData,
-                config: {
-                    systemInstruction: systemInstruction,
-                    temperature: 0.9, // Increased for variety
-                    maxOutputTokens: 2500,
-                }
+            const model = genAI.getGenerativeModel({
+                model: "gemini-1.5-flash",
+                systemInstruction: systemInstruction,
             });
 
-            setPrompt(response.text || "생성된 내용이 없습니다.");
+            const response = await model.generateContent(inputData);
+            const text = response.response.text();
+
+            setPrompt(text || "생성된 내용이 없습니다.");
         } catch (error) {
             console.error("AI Generation Error:", error);
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
@@ -200,14 +198,14 @@ ${activitiesData}
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden transition-colors duration-200">
-            <Header 
-                title="창체 도우미" 
-                icon="diversity_3" 
-                colorClass="text-s4-primary" 
-                bgClass="bg-s4-primary/20" 
+            <Header
+                title="창체 도우미"
+                icon="diversity_3"
+                colorClass="text-s4-primary"
+                bgClass="bg-s4-primary/20"
                 backLink={true}
             />
-            
+
             <div className="flex flex-1 justify-center w-full">
                 <div className="flex flex-col max-w-[1280px] w-full px-4 md:px-10 pb-20 pt-8">
                     <div className="mb-10 text-center space-y-3">
@@ -221,12 +219,12 @@ ${activitiesData}
                         <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto font-normal">
                             {isClub ? (
                                 <>
-                                    <span className="font-bold text-s4-primary">활동 내용</span>을 구체적으로 입력하세요.<br className="hidden md:block"/>
+                                    <span className="font-bold text-s4-primary">활동 내용</span>을 구체적으로 입력하세요.<br className="hidden md:block" />
                                     AI가 내용을 다듬고 느낀점을 추가하여 완성합니다.
                                 </>
                             ) : (
                                 <>
-                                    날짜, 활동명, 내용을 입력하여 리스트를 만드세요.<br className="hidden md:block"/>
+                                    날짜, 활동명, 내용을 입력하여 리스트를 만드세요.<br className="hidden md:block" />
                                     AI가 <span className="font-bold text-s4-primary">'활동명(날짜) 내용 + 성장'</span> 형식으로 완성합니다.
                                 </>
                             )}
@@ -239,10 +237,10 @@ ${activitiesData}
                             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm">
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
-                                        {id: "자율활동", icon: "accessibility_new"},
-                                        {id: "동아리활동", icon: "groups"},
+                                        { id: "자율활동", icon: "accessibility_new" },
+                                        { id: "동아리활동", icon: "groups" },
                                         // 봉사활동 Removed
-                                        {id: "진로활동", icon: "rocket_launch"}
+                                        { id: "진로활동", icon: "rocket_launch" }
                                     ].map(act => (
                                         <label key={act.id} className="cursor-pointer" onClick={() => handleTypeChange(act.id as ActivityType)}>
                                             <input className="peer sr-only" type="radio" name="activityType" checked={activityType === act.id} onChange={() => handleTypeChange(act.id as ActivityType)} />
@@ -264,23 +262,23 @@ ${activitiesData}
                                     </h3>
                                     <span className="text-xs text-s4-primary font-bold bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-md">Step 1</span>
                                 </div>
-                                
+
                                 {/* Non-Club Inputs: Date & Name */}
                                 {!isClub && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div className="md:col-span-1">
                                             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">날짜 (기간)</label>
                                             <div className="relative">
-                                                <input 
+                                                <input
                                                     value={currentDate}
                                                     onChange={(e) => setCurrentDate(e.target.value)}
-                                                    className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent py-2.5 pl-4 pr-10 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm" 
-                                                    placeholder="2025.03.02." 
+                                                    className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent py-2.5 pl-4 pr-10 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm"
+                                                    placeholder="2025.03.02."
                                                     type="text"
                                                 />
                                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
                                                     <span className="material-symbols-outlined text-slate-400 pointer-events-none text-[20px]">calendar_month</span>
-                                                    <input 
+                                                    <input
                                                         type="date"
                                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                         onChange={(e) => {
@@ -298,31 +296,31 @@ ${activitiesData}
                                         </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">활동명</label>
-                                            <input 
+                                            <input
                                                 value={currentName}
                                                 onChange={(e) => setCurrentName(e.target.value)}
-                                                className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent py-2.5 px-4 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm" 
-                                                placeholder="예: 수학여행, 진로체험의 날" 
+                                                className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent py-2.5 px-4 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm"
+                                                placeholder="예: 수학여행, 진로체험의 날"
                                                 type="text"
                                             />
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <div className="mb-4">
                                     <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                        활동 내용 
+                                        활동 내용
                                         <span className="text-xs font-normal text-slate-400 ml-1">(Fact 위주)</span>
                                     </label>
-                                    <textarea 
+                                    <textarea
                                         value={currentContent}
                                         onChange={(e) => setCurrentContent(e.target.value)}
-                                        className="w-full h-24 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed" 
+                                        className="w-full h-24 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s4-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed"
                                         placeholder={isClub ? "예: 산성비가 식물 성장에 미치는 영향 실험을 진행함. (활동명 없이 내용만 입력)" : "어떤 활동을 했는지 구체적인 사실 위주로 입력하세요."}
                                     ></textarea>
                                 </div>
 
-                                <button 
+                                <button
                                     onClick={handleAddActivity}
                                     className="w-full py-3 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                                 >
@@ -339,7 +337,7 @@ ${activitiesData}
                                         <button onClick={() => setActivities([])} className="text-xs text-red-500 hover:text-red-600 underline">전체 삭제</button>
                                     )}
                                 </div>
-                                
+
                                 {activities.length === 0 ? (
                                     <div className="text-center py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
                                         <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">playlist_add</span>
@@ -360,7 +358,7 @@ ${activitiesData}
                                                         {item.content}
                                                     </p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => handleDeleteActivity(item.id)}
                                                     className="self-center p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                     title="삭제"
@@ -373,7 +371,7 @@ ${activitiesData}
                                 )}
                             </div>
 
-                            <button 
+                            <button
                                 onClick={handleGenerate}
                                 disabled={isLoading || activities.length === 0}
                                 className="w-full py-5 bg-s4-primary hover:bg-orange-500 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-lg shadow-orange-500/30 transition-all transform hover:scale-[1.01] active:scale-[0.99] text-lg flex items-center justify-center gap-3 group mt-4"
@@ -392,8 +390,8 @@ ${activitiesData}
                             </button>
                         </div>
 
-                        <ResultPanel 
-                            promptText={prompt} 
+                        <ResultPanel
+                            promptText={prompt}
                             setPromptText={setPrompt}
                             isLoading={isLoading}
                             onReset={handleReset}
@@ -403,10 +401,10 @@ ${activitiesData}
                                 <>
                                     <p><span className="text-orange-400">Activity:</span> {activityType}</p>
                                     <p><span className="text-orange-300">Format:</span> {isClub ? "내용 + 성장" : "활동명(날짜) 내용 + 성장"}</p>
-                                    <p><span className="text-yellow-400">Check:</span><br/>
-                                    - 접속사 없이 활동 나열<br/>
-                                    - 학생별 개별화/차별화 적용<br/>
-                                    - 1500바이트 내외 완성</p>
+                                    <p><span className="text-yellow-400">Check:</span><br />
+                                        - 접속사 없이 활동 나열<br />
+                                        - 학생별 개별화/차별화 적용<br />
+                                        - 1500바이트 내외 완성</p>
                                     <p className="text-slate-500 mt-2 text-xs">※ 생성된 내용은 참고용으로 활용하시고, 반드시 선생님의 검토를 거쳐 나이스에 입력해주세요.</p>
                                 </>
                             }

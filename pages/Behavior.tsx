@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useApiKey } from '../contexts/ApiKeyContext.tsx';
 
 const BehaviorScreen: React.FC = () => {
@@ -42,8 +42,8 @@ const BehaviorScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const ai = new GoogleGenAI({ apiKey: apiKey });
-            
+            const genAI = new GoogleGenerativeAI(apiKey);
+
             const systemInstruction = `당신은 대한민국 고등학교 교사로서 나이스(NEIS)에 입력할 '행동특성 및 종합의견'을 작성하는 전문가입니다.
 
 ### [핵심 목표: 개별화 및 차별화]
@@ -77,17 +77,15 @@ const BehaviorScreen: React.FC = () => {
 예시 분량 감각 (약 500자 목표):
 (입력: 성실함) -> (출력: 학기 초 학급 환경미화 활동에서 아무도 맡으려 하지 않는 분리수거 당번을 자원하여 매일 아침 일찍 등교해 교실을 정리하는 등 남다른 성실함을 보임. 친구들이 등교하기 전 쾌적한 환경을 조성하기 위해 창문을 열고 환기를 시키며, 쓰레기 분리배출 규정을 꼼꼼히 익혀 학급 내 분리수거함이 섞이지 않도록 수시로 점검함. 이러한 노력 덕분에 학급 환경 점수에서 우수한 성적을 거두었으며, 급우들 또한 솔선수범하는 태도에 감화되어 학급 정리에 동참하는 분위기가 형성됨. 묵묵히 자신의 맡은 바 책임을 다하고 공동체를 위해 헌신하는 태도에서 뛰어난 봉사 정신과 리더십을 엿볼 수 있으며, 앞으로도 타의 모범이 되는 훌륭한 인재로 성장할 것으로 기대됨.)`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: `[관찰 내용]\n${observation}`,
-                config: {
-                    systemInstruction: systemInstruction,
-                    temperature: 0.9, // Increased for variety
-                    maxOutputTokens: 2000,
-                }
+            const model = genAI.getGenerativeModel({
+                model: "gemini-1.5-flash",
+                systemInstruction: systemInstruction,
             });
 
-            setPrompt(response.text || "생성된 내용이 없습니다.");
+            const response = await model.generateContent(observation);
+            const text = response.response.text();
+
+            setPrompt(text || "생성된 내용이 없습니다.");
         } catch (error) {
             console.error("AI Generation Error:", error);
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
@@ -108,14 +106,14 @@ const BehaviorScreen: React.FC = () => {
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden transition-colors duration-200">
-            <Header 
-                title="행특 도우미" 
-                icon="psychology" 
-                colorClass="text-s1-primary" 
-                bgClass="bg-s1-primary/10" 
+            <Header
+                title="행특 도우미"
+                icon="psychology"
+                colorClass="text-s1-primary"
+                bgClass="bg-s1-primary/10"
                 backLink={true}
             />
-            
+
             <div className="flex flex-1 justify-center w-full">
                 <div className="flex flex-col max-w-[1280px] w-full px-4 md:px-10 pb-20 pt-8">
                     <div className="mb-10 text-center space-y-3">
@@ -127,7 +125,7 @@ const BehaviorScreen: React.FC = () => {
                             행동특성 및 종합의견 <span className="text-transparent bg-clip-text bg-gradient-to-r from-s1-primary to-indigo-600">AI 생성기</span>
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto font-normal">
-                            선생님의 관찰 기록을 바탕으로 AI가 학교생활기록부를 작성합니다.<br className="hidden md:block"/> 
+                            선생님의 관찰 기록을 바탕으로 AI가 학교생활기록부를 작성합니다.<br className="hidden md:block" />
                             <span className="font-bold text-s1-primary">명사형 어미</span>와 <span className="font-bold text-s1-primary">START 기법</span>이 적용된 완성본을 받아보세요.
                         </p>
                     </div>
@@ -145,15 +143,15 @@ const BehaviorScreen: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
                                     학생의 특징, 에피소드, 변화 과정을 자유롭게 입력해주세요. '성실', '책임감' 같은 단어만 입력해도 AI가 구체적인 사례를 덧붙여 완성해드립니다.
                                 </label>
-                                <textarea 
+                                <textarea
                                     value={observation}
                                     onChange={(e) => setObservation(e.target.value)}
-                                    className="w-full h-40 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s1-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed" 
+                                    className="w-full h-40 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-s1-primary focus:border-transparent p-4 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none transition-all text-sm leading-relaxed"
                                     placeholder="예: 학기 초에는 발표를 꺼려했으나(S), 모둠 활동에서 자료 조사 역할을 맡으며(T) 책임감을 갖고 성실히 준비함(A). 이후 자신감이 붙어 자발적으로 발표자로 나섰으며(R), 이를 통해 소극적인 성격을 극복하고 의사소통 능력이 향상됨(T)."
                                 ></textarea>
                                 <div className="flex flex-wrap gap-2 mt-4">
                                     {keywords.map((kw) => (
-                                        <button 
+                                        <button
                                             key={kw}
                                             onClick={() => addKeyword(kw)}
                                             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-600 dark:text-slate-300 hover:bg-s1-primary/5 hover:border-s1-primary/30 hover:text-s1-primary dark:hover:bg-s1-primary/20 dark:hover:text-s1-primary-light transition-colors"
@@ -172,7 +170,7 @@ const BehaviorScreen: React.FC = () => {
                                     </div>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">trending_up</span>
-                                        <select 
+                                        <select
                                             value={tone}
                                             onChange={(e) => setTone(e.target.value)}
                                             style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
@@ -188,7 +186,7 @@ const BehaviorScreen: React.FC = () => {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 onClick={handleGenerate}
                                 disabled={isLoading}
                                 className="w-full py-5 bg-s1-primary hover:bg-s1-primary-hover disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-lg shadow-s1-primary/30 transition-all transform hover:scale-[1.01] active:scale-[0.99] text-lg flex items-center justify-center gap-3 group mt-4"
@@ -207,8 +205,8 @@ const BehaviorScreen: React.FC = () => {
                             </button>
                         </div>
 
-                        <ResultPanel 
-                            promptText={prompt} 
+                        <ResultPanel
+                            promptText={prompt}
                             setPromptText={setPrompt}
                             isLoading={isLoading}
                             title="생성된_행동특성.txt"
@@ -218,10 +216,10 @@ const BehaviorScreen: React.FC = () => {
                                 <>
                                     <p><span className="text-purple-400">AI Role:</span> 학교생활기록부 작성 전문가</p>
                                     <p><span className="text-blue-400">Process:</span> START 기법 서사 구조화</p>
-                                    <p><span className="text-green-400">Check:</span><br/>
-                                    - 명사형 어미 (~함.) 및 마침표 적용<br/>
-                                    - 학생별 개별화/차별화 적용<br/>
-                                    - 발전 가능성으로 마무리</p>
+                                    <p><span className="text-green-400">Check:</span><br />
+                                        - 명사형 어미 (~함.) 및 마침표 적용<br />
+                                        - 학생별 개별화/차별화 적용<br />
+                                        - 발전 가능성으로 마무리</p>
                                     <p className="text-slate-500 mt-2 text-xs">※ 생성된 내용은 참고용으로 활용하시고, 반드시 선생님의 검토를 거쳐 나이스에 입력해주세요.</p>
                                 </>
                             }
