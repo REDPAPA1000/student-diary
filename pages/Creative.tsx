@@ -163,7 +163,7 @@ ${activitiesData}
 수학여행(2025.06.04.-2025.06.06.)에서 베트남 다낭과 호이안의 문화유산을 탐방하며... (중략) ...공동체 의식을 함양함. AI 진로 캠프(2025.05.20.)에 참여하여...`;
 
             const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
+                model: "gemini-1.5-flash-latest",
                 systemInstruction: systemInstruction,
             });
 
