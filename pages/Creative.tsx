@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { useApiKey } from '../contexts/ApiKeyContext.tsx';
 import { ActivityType } from '../types';
+import { GoogleGenAI } from "@google/genai";
 
 interface ActivityItem {
     id: number;
@@ -13,7 +13,6 @@ interface ActivityItem {
 }
 
 const CreativeScreen: React.FC = () => {
-    const { apiKey } = useApiKey();
     const [prompt, setPrompt] = useState("");
     // Default to '자율활동'. '봉사활동' is removed.
     const [activityType, setActivityType] = useState<ActivityType>("자율활동");
@@ -81,7 +80,7 @@ const CreativeScreen: React.FC = () => {
     };
 
     const handleGenerate = async () => {
-        if (!apiKey) {
+        if (!process.env.API_KEY) {
             alert("메인 페이지에서 Google API Key를 먼저 설정해주세요.");
             return;
         }
@@ -98,7 +97,7 @@ const CreativeScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             // Construct input data from the list
             const activitiesData = activities.map((item, index) => {
@@ -162,17 +161,22 @@ ${activitiesData}
 (자율/진로활동 예시 - 날짜, 활동명 포함)
 수학여행(2025.06.04.-2025.06.06.)에서 베트남 다낭과 호이안의 문화유산을 탐방하며... (중략) ...공동체 의식을 함양함. AI 진로 캠프(2025.05.20.)에 참여하여...`;
 
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.0-flash-exp",
-                systemInstruction: systemInstruction,
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-preview',
+                contents: inputData,
+                config: {
+                    systemInstruction: systemInstruction,
+                    temperature: 0.9,
+                }
             });
 
-            const response = await model.generateContent(inputData);
-            const text = response.response.text();
-
-            setPrompt(text || "생성된 내용이 없습니다.");
-        } catch (error) {
+            setPrompt(response.text || "생성된 내용이 없습니다.");
+        } catch (error: any) {
             console.error("AI Generation Error:", error);
+            if (error?.message?.includes("Requested entity was not found")) {
+                // @ts-ignore
+                window.aistudio?.openSelectKey();
+            }
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
         } finally {
             setIsLoading(false);

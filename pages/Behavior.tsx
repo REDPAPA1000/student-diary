@@ -1,11 +1,10 @@
+
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { useApiKey } from '../contexts/ApiKeyContext.tsx';
+import { GoogleGenAI } from "@google/genai";
 
 const BehaviorScreen: React.FC = () => {
-    const { apiKey } = useApiKey();
     const [prompt, setPrompt] = useState("");
     const [observation, setObservation] = useState("");
     const [tone, setTone] = useState("학생의 잠재력과 발전 가능성을 중심으로 서술");
@@ -25,7 +24,8 @@ const BehaviorScreen: React.FC = () => {
     ];
 
     const handleGenerate = async () => {
-        if (!apiKey) {
+        // Using process.env.API_KEY directly as per requirements
+        if (!process.env.API_KEY) {
             alert("메인 페이지에서 Google API Key를 먼저 설정해주세요.");
             return;
         }
@@ -42,7 +42,8 @@ const BehaviorScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
+            // Create a new instance right before call
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             const systemInstruction = `당신은 대한민국 고등학교 교사로서 나이스(NEIS)에 입력할 '행동특성 및 종합의견'을 작성하는 전문가입니다.
 
@@ -77,17 +78,23 @@ const BehaviorScreen: React.FC = () => {
 예시 분량 감각 (약 500자 목표):
 (입력: 성실함) -> (출력: 학기 초 학급 환경미화 활동에서 아무도 맡으려 하지 않는 분리수거 당번을 자원하여 매일 아침 일찍 등교해 교실을 정리하는 등 남다른 성실함을 보임. 친구들이 등교하기 전 쾌적한 환경을 조성하기 위해 창문을 열고 환기를 시키며, 쓰레기 분리배출 규정을 꼼꼼히 익혀 학급 내 분리수거함이 섞이지 않도록 수시로 점검함. 이러한 노력 덕분에 학급 환경 점수에서 우수한 성적을 거두었으며, 급우들 또한 솔선수범하는 태도에 감화되어 학급 정리에 동참하는 분위기가 형성됨. 묵묵히 자신의 맡은 바 책임을 다하고 공동체를 위해 헌신하는 태도에서 뛰어난 봉사 정신과 리더십을 엿볼 수 있으며, 앞으로도 타의 모범이 되는 훌륭한 인재로 성장할 것으로 기대됨.)`;
 
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.0-flash-exp",
-                systemInstruction: systemInstruction,
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-preview', // Upgraded for higher quality as per marketing text
+                contents: `[관찰 내용]\n${observation}`,
+                config: {
+                    systemInstruction: systemInstruction,
+                    temperature: 0.9,
+                }
             });
 
-            const response = await model.generateContent(observation);
-            const text = response.response.text();
-
-            setPrompt(text || "생성된 내용이 없습니다.");
-        } catch (error) {
+            setPrompt(response.text || "생성된 내용이 없습니다.");
+        } catch (error: any) {
             console.error("AI Generation Error:", error);
+            // Handling forRequested entity was not found error
+            if (error?.message?.includes("Requested entity was not found")) {
+                // @ts-ignore
+                window.aistudio?.openSelectKey();
+            }
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
         } finally {
             setIsLoading(false);

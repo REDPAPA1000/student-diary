@@ -1,11 +1,10 @@
+
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { useApiKey } from '../contexts/ApiKeyContext.tsx';
+import { GoogleGenAI } from "@google/genai";
 
 const SubjectScreen: React.FC = () => {
-    const { apiKey } = useApiKey();
     // New Focus Options for different student levels
     const focusOptions = [
         "[심화/탐구] 자기주도적 탐구와 학술적 깊이 강조 (상위권)",
@@ -57,7 +56,7 @@ const SubjectScreen: React.FC = () => {
     ];
 
     const handleGenerate = async () => {
-        if (!apiKey) {
+        if (!process.env.API_KEY) {
             alert("메인 페이지에서 Google API Key를 먼저 설정해주세요.");
             return;
         }
@@ -74,7 +73,7 @@ const SubjectScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             const inputData = `
 [과목 정보]
@@ -118,17 +117,22 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
 예시 분량 감각 (약 500자 목표):
 (입력: 미적분 문제 풀이 잘함) -> (출력: '도함수의 활용' 단원을 학습하며... (중략) ... 이를 통해 수학적 모델링 역량을 증명하였으며 향후 공학 분야에서의 응용 가능성이 매우 높음.)`;
 
-            const model = genAI.getGenerativeModel({
-                model: "gemini-2.0-flash-exp",
-                systemInstruction: systemInstruction,
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-preview',
+                contents: inputData,
+                config: {
+                    systemInstruction: systemInstruction,
+                    temperature: 0.9,
+                }
             });
 
-            const response = await model.generateContent(inputData);
-            const text = response.response.text();
-
-            setPrompt(text || "생성된 내용이 없습니다.");
-        } catch (error) {
+            setPrompt(response.text || "생성된 내용이 없습니다.");
+        } catch (error: any) {
             console.error("AI Generation Error:", error);
+            if (error?.message?.includes("Requested entity was not found")) {
+                // @ts-ignore
+                window.aistudio?.openSelectKey();
+            }
             setPrompt("오류가 발생했습니다. 잠시 후 다시 시도해주세요. (API 키가 유효한지 확인해주세요)");
         } finally {
             setIsLoading(false);

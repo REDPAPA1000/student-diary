@@ -6,14 +6,14 @@ interface ApiKeyContextType {
     hasKey: boolean;
 }
 
-const ApiKeyContext = createContext<ApiKeyContextType>({ apiKey: '', setApiKey: () => { }, hasKey: false });
+const ApiKeyContext = createContext<ApiKeyContextType>({ apiKey: '', setApiKey: () => {}, hasKey: false });
 
 export const ApiKeyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [apiKey, setApiKeyState] = useState('');
     const [hasKey, setHasKey] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem('user_gemini_key');
+        const stored = localStorage.getItem('gemini_api_key');
         if (stored) {
             setApiKeyState(stored);
             setHasKey(true);
@@ -23,10 +23,10 @@ export const ApiKeyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const setApiKey = (key: string) => {
         setApiKeyState(key);
         if (key) {
-            localStorage.setItem('user_gemini_key', key);
+            localStorage.setItem('gemini_api_key', key);
             setHasKey(true);
         } else {
-            localStorage.removeItem('user_gemini_key');
+            localStorage.removeItem('gemini_api_key');
             setHasKey(false);
         }
     };
