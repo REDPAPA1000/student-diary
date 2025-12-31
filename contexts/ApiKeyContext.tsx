@@ -6,7 +6,7 @@ interface ApiKeyContextType {
     hasKey: boolean;
 }
 
-const ApiKeyContext = createContext<ApiKeyContextType>({ apiKey: '', setApiKey: () => {}, hasKey: false });
+const ApiKeyContext = createContext<ApiKeyContextType>({ apiKey: '', setApiKey: () => { }, hasKey: false });
 
 export const ApiKeyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [apiKey, setApiKeyState] = useState('');
@@ -14,6 +14,7 @@ export const ApiKeyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     useEffect(() => {
         const stored = localStorage.getItem('gemini_api_key');
+        console.log("Context: Checking localStorage", stored ? "Found key" : "No key");
         if (stored) {
             setApiKeyState(stored);
             setHasKey(true);
