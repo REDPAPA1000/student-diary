@@ -32,15 +32,23 @@ const HomeScreen: React.FC = () => {
             } catch (err) {
                 console.error("Failed to open system key selector", err);
             }
+        } else {
+            // Fallback for Vercel/Standard Web Environments
+            const manualKey = prompt("Google AI Studio 환경이 아닙니다.\nAPI 키를 직접 입력해주세요:");
+            if (manualKey) {
+                localStorage.setItem('gemini_api_key', manualKey);
+                setIsConnected(true);
+                window.location.reload(); // Refresh to apply the new key
+            }
         }
     };
 
     return (
         <div className="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden transition-colors duration-200 font-body">
-            <Header 
-                title="생활기록부 프롬프트 생성기" 
-                icon="auto_awesome" 
-                colorClass="text-primary" 
+            <Header
+                title="생활기록부 프롬프트 생성기"
+                icon="auto_awesome"
+                colorClass="text-primary"
                 bgClass="bg-primary/10"
             />
 
@@ -58,32 +66,31 @@ const HomeScreen: React.FC = () => {
                             </span>
                         </div>
                         <h1 className="text-slate-900 dark:text-white text-4xl md:text-6xl font-black leading-tight tracking-tight">
-                            생동감 넘치는 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">생활기록부</span><br/>
+                            생동감 넘치는 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-500">생활기록부</span><br />
                             AI와 함께 완성하세요
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl max-w-3xl mx-auto font-normal leading-relaxed break-keep">
-                            선생님의 소중한 관찰 기록이 전문적인 문장으로 재탄생합니다.<br className="hidden md:block"/> 
+                            선생님의 소중한 관찰 기록이 전문적인 문장으로 재탄생합니다.<br className="hidden md:block" />
                             시스템 외장 API 연동을 통해 더욱 안전하고 강력한 성능을 경험하세요.
                         </p>
-                        
+
                         {/* External Key Management Button */}
-                        <div className="pt-4 animate-fade-in" style={{animationDelay: '0.4s'}}>
-                            <button 
+                        <div className="pt-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                            <button
                                 onClick={handleOpenSystemKeyPopup}
-                                className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 shadow-xl ${
-                                    isConnected 
-                                    ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900" 
-                                    : "bg-primary text-slate-900 hover:bg-primary-hover shadow-primary/20"
-                                }`}
+                                className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 shadow-xl ${isConnected
+                                        ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                                        : "bg-primary text-slate-900 hover:bg-primary-hover shadow-primary/20"
+                                    }`}
                             >
                                 <span className="material-symbols-outlined">{isConnected ? 'admin_panel_settings' : 'vpn_key'}</span>
                                 <span>{isConnected ? '시스템 API 설정 관리' : '외부 API 키 연결하기'}</span>
                                 <span className="material-symbols-outlined text-sm">open_in_new</span>
                             </button>
                             <div className="mt-4">
-                                <a 
-                                    href="https://ai.google.dev/gemini-api/docs/billing" 
-                                    target="_blank" 
+                                <a
+                                    href="https://ai.google.dev/gemini-api/docs/billing"
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-slate-400 hover:text-primary underline transition-colors"
                                 >
