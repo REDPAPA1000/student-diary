@@ -107,7 +107,9 @@ const SubjectScreen: React.FC = () => {
 - 주어 생략.
 
 예시 분량 감각 (약 500자 목표):
-(입력: 미적분 문제 풀이 잘함)            const model = genAI.getGenerativeModel({
+(입력: 미적분 문제 풀이 잘함) -> (출력: '도함수의 활용' 단원을 학습하며... (중략) ... 이를 통해 수학적 모델링 역량을 증명하였으며 향후 공학 분야에서의 응용 가능성이 매우 높음.)`;
+
+            const model = genAI.getGenerativeModel({
                 model: 'gemini-1.5-flash',
                 systemInstruction: systemInstruction,
                 generationConfig: {
@@ -116,17 +118,17 @@ const SubjectScreen: React.FC = () => {
             });
 
             const activity = `
-            [과목 정보]
-            - 과목명: ${ subject }
+[과목 정보]
+- 과목명: ${subject}
 
-            [수업 태도 및 관찰]
-${ attitude || "수업 태도가 바르고 성실함" }
+[수업 태도 및 관찰]
+${attitude || "수업 태도가 바르고 성실함"}
 
-            [평가 및 탐구 활동 내용(우수성 포함)]
-${ details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수성 내용을 창의적으로 생성" }
+[평가 및 탐구 활동 내용 (우수성 포함)]
+${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수성 내용을 창의적으로 생성"}
             `.trim();
 
-            const result = await model.generateContent(`[과목 및 단원]\n${ subject } \n\n[성취 기준 및 활동]\n${ activity } `);
+            const result = await model.generateContent(`[과목 및 단원]\n${subject}\n\n[성취 기준 및 활동]\n${activity}`);
             const response = await result.response;
             setPrompt(response.text());
         } catch (error: any) {
@@ -253,7 +255,7 @@ ${ details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                         <h3 className="text-slate-900 dark:text-white font-bold text-lg">
                                             평가 및 활동 내용
                                             <span className="text-sm font-normal text-slate-500 ml-2">
-                                                ({subject ? `${ subject } 핵심 역량` : "우수성"})
+                                                ({subject ? `${subject} 핵심 역량` : "우수성"})
                                             </span>
                                         </h3>
                                         <span className="text-xs text-slate-400 font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">심화 탐구</span>

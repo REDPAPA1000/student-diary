@@ -1,4 +1,4 @@
-```
+
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
@@ -106,25 +106,25 @@ const CreativeScreen: React.FC = () => {
                 if (isClub) {
                     // Club: Content only
                     return `
-[활동 ${ index + 1 }]
-- 활동내용: ${ item.content }
+[활동 ${index + 1}]
+- 활동내용: ${item.content}
 `.trim();
                 } else {
                     // Auto/Career: Date, Name, Content
                     return `
-[활동 ${ index + 1 }]
-- 날짜: ${ item.date }
-- 활동명: ${ item.name }
-- 활동내용: ${ item.content }
+[활동 ${index + 1}]
+- 날짜: ${item.date}
+- 활동명: ${item.name}
+- 활동내용: ${item.content}
 `.trim();
                 }
             }).join("\n");
 
             const inputData = `
-[선택된 영역] ${ activityType }
+[선택된 영역] ${activityType}
 
 [입력된 활동 리스트]
-${ activitiesData }
+${activitiesData}
 `.trim();
 
             const systemInstruction = `당신은 대한민국 고등학교 교사로서 나이스(NEIS)에 입력할 '창의적 체험활동 특기사항'을 작성하는 전문가입니다.
@@ -358,7 +358,7 @@ ${ activitiesData }
                                                             <h4 className="font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
                                                         </div>
                                                     )}
-                                                    <p className={`text - sm text - slate - 600 dark: text - slate - 400 line - clamp - 2 ${ isClub ? 'font-medium' : '' } `}>
+                                                    <p className={`text - sm text - slate - 600 dark: text - slate - 400 line - clamp - 2 ${isClub ? 'font-medium' : ''} `}>
                                                         {item.content}
                                                     </p>
                                                 </div>
