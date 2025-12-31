@@ -33,12 +33,28 @@ const HomeScreen: React.FC = () => {
                 console.error("Failed to open system key selector", err);
             }
         } else {
-            // Fallback for Vercel/Standard Web Environments
-            const manualKey = prompt("Google AI Studio 환경이 아닙니다.\nAPI 키를 직접 입력해주세요:");
+            // Fallback for Standard Web Environments
+            const hasKey = window.confirm(
+                "Google Gemini API 키를 보유하고 계신가요?\n\n" +
+                "[확인] 키 입력창 열기\n" +
+                "[취소] 키 발급 페이지(Google AI Studio)로 이동"
+            );
+
+            if (!hasKey) {
+                window.open('https://aistudio.google.com/app/apikey', '_blank');
+                return;
+            }
+
+            const manualKey = prompt("Google Gemini API 키를 입력해주세요 (sk-로 시작하는 키):");
             if (manualKey) {
-                localStorage.setItem('gemini_api_key', manualKey);
-                setIsConnected(true);
-                window.location.reload(); // Refresh to apply the new key
+                if (manualKey.startsWith('sk-')) {
+                    localStorage.setItem('gemini_api_key', manualKey);
+                    setIsConnected(true);
+                    alert("Gemini API 키가 성공적으로 등록되었습니다.");
+                    window.location.reload();
+                } else {
+                    alert("올바르지 않은 키 형식입니다. 'sk-'로 시작하는 전체 키를 입력해주세요.");
+                }
             }
         }
     };
@@ -62,7 +78,7 @@ const HomeScreen: React.FC = () => {
                                 <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-primary' : 'bg-red-500'}`}></span>
                             </span>
                             <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tracking-wider uppercase">
-                                {isConnected ? "System Connection Active" : "External Key Required"}
+                                {isConnected ? "System Connection Active" : "Gemini API Key Required"}
                             </span>
                         </div>
                         <h1 className="text-slate-900 dark:text-white text-4xl md:text-6xl font-black leading-tight tracking-tight">
@@ -71,7 +87,7 @@ const HomeScreen: React.FC = () => {
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl max-w-3xl mx-auto font-normal leading-relaxed break-keep">
                             선생님의 소중한 관찰 기록이 전문적인 문장으로 재탄생합니다.<br className="hidden md:block" />
-                            시스템 외장 API 연동을 통해 더욱 안전하고 강력한 성능을 경험하세요.
+                            Google <strong>Gemini 3 Pro</strong> 모델을 통해 더욱 안전하고 강력한 성능을 경험하세요.
                         </p>
 
                         {/* External Key Management Button */}
@@ -79,12 +95,12 @@ const HomeScreen: React.FC = () => {
                             <button
                                 onClick={handleOpenSystemKeyPopup}
                                 className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 shadow-xl ${isConnected
-                                        ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                                        : "bg-primary text-slate-900 hover:bg-primary-hover shadow-primary/20"
+                                    ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                                    : "bg-primary text-slate-900 hover:bg-primary-hover shadow-primary/20"
                                     }`}
                             >
                                 <span className="material-symbols-outlined">{isConnected ? 'admin_panel_settings' : 'vpn_key'}</span>
-                                <span>{isConnected ? '시스템 API 설정 관리' : '외부 API 키 연결하기'}</span>
+                                <span>{isConnected ? 'Gemini API 설정 관리' : 'Gemini API 키 연결하기'}</span>
                                 <span className="material-symbols-outlined text-sm">open_in_new</span>
                             </button>
                             <div className="mt-4">
