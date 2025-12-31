@@ -110,7 +110,7 @@ const SubjectScreen: React.FC = () => {
 (입력: 미적분 문제 풀이 잘함) -> (출력: '도함수의 활용' 단원을 학습하며... (중략) ... 이를 통해 수학적 모델링 역량을 증명하였으며 향후 공학 분야에서의 응용 가능성이 매우 높음.)`;
 
             const model = genAI.getGenerativeModel({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-1.5-flash-001',
                 systemInstruction: systemInstruction,
                 generationConfig: {
                     temperature: 0.9,
