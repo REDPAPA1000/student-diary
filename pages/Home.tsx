@@ -110,7 +110,7 @@ const HomeScreen: React.FC = () => {
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl max-w-3xl mx-auto font-normal leading-relaxed break-keep">
                             선생님의 소중한 관찰 기록이 전문적인 문장으로 재탄생합니다.<br className="hidden md:block" />
-                            Google <strong>Gemini 3 Pro</strong> 모델을 통해 더욱 안전하고 강력한 성능을 경험하세요.
+                            Google <strong>Gemini 1.5 Pro</strong> 모델을 통해 더욱 안전하고 강력한 성능을 경험하세요.
                         </p>
 
                         {/* External Key Management Button */}
@@ -225,7 +225,7 @@ const HomeScreen: React.FC = () => {
                                 <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
                                     <span className="material-symbols-outlined">auto_awesome</span>
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Gemini 3 Pro</h4>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Gemini 1.5 Pro</h4>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">최신 언어 모델과 고도화된 프롬프트 엔지니어링으로 압도적인 품질을 보장합니다.</p>
                             </div>
                             <div className="space-y-4">
