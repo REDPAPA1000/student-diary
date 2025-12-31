@@ -11,11 +11,26 @@ const HomeScreen: React.FC = () => {
 
     useEffect(() => {
         const checkKey = async () => {
-            // @ts-ignore - aistudio is pre-configured in the environment
+            // Priority 1: Check System Key (Project IDX)
+            // @ts-ignore
             if (window.aistudio) {
-                // @ts-ignore
-                const hasKey = await window.aistudio.hasSelectedApiKey();
-                setIsConnected(hasKey);
+                try {
+                    // @ts-ignore
+                    const hasSystemKey = await window.aistudio.hasSelectedApiKey();
+                    if (hasSystemKey) {
+                        setIsConnected(true);
+                        return;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            // Priority 2: Check Manual Fallback Key (LocalStorage)
+            const localKey = localStorage.getItem('gemini_api_key');
+            if (localKey) {
+                setIsConnected(true);
+                setManualKey(localKey);
             }
         };
         checkKey();
@@ -39,6 +54,9 @@ const HomeScreen: React.FC = () => {
             }
         } else {
             // Fallback: Open Manual Input Modal
+            // If key exists, pre-fill logic handled in useEffect, ensuring UI consistency
+            const storedKey = localStorage.getItem('gemini_api_key');
+            if (storedKey) setManualKey(storedKey);
             setShowManualInput(true);
         }
     };
@@ -52,6 +70,16 @@ const HomeScreen: React.FC = () => {
         setIsConnected(true);
         setShowManualInput(false);
         window.location.reload();
+    };
+
+    const handleClearKey = () => {
+        if (window.confirm("API 키를 삭제하고 연결을 해제하시겠습니까?")) {
+            localStorage.removeItem('gemini_api_key');
+            setManualKey('');
+            setIsConnected(false);
+            setShowManualInput(false);
+            window.location.reload();
+        }
     };
 
     return (
@@ -73,7 +101,7 @@ const HomeScreen: React.FC = () => {
                                 <span className={`relative inline-flex rounded-full h-2 w-2 ${isConnected ? 'bg-primary' : 'bg-red-500'}`}></span>
                             </span>
                             <span className="text-xs font-bold text-slate-600 dark:text-slate-300 tracking-wider uppercase">
-                                {isConnected ? "System Connection Active" : "Gemini API Key Required"}
+                                {isConnected ? "Google Gemini Connected" : "Connection Required"}
                             </span>
                         </div>
                         <h1 className="text-slate-900 dark:text-white text-4xl md:text-6xl font-black leading-tight tracking-tight">
@@ -90,13 +118,13 @@ const HomeScreen: React.FC = () => {
                             <button
                                 onClick={handleOpenSystemKeyPopup}
                                 className={`inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 shadow-xl ${isConnected
-                                    ? "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                                    : "bg-primary text-slate-900 hover:bg-primary-hover shadow-primary/20"
+                                    ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20"
+                                    : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900"
                                     }`}
                             >
-                                <span className="material-symbols-outlined">{isConnected ? 'admin_panel_settings' : 'vpn_key'}</span>
-                                <span>{isConnected ? 'Gemini API 설정 관리' : 'Gemini API 키 연결하기'}</span>
-                                <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                <span className="material-symbols-outlined">{isConnected ? 'check_circle' : 'vpn_key'}</span>
+                                <span>{isConnected ? 'Gemini API 연결됨 (설정)' : 'Gemini API 키 연결하기'}</span>
+                                <span className="material-symbols-outlined text-sm">{isConnected ? 'settings' : 'open_in_new'}</span>
                             </button>
                             <div className="mt-4">
                                 <a
@@ -219,7 +247,7 @@ const HomeScreen: React.FC = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <span className="material-symbols-outlined text-primary">vp_key</span>
-                                    API 키 직접 연결
+                                    {isConnected ? 'API 키 관리' : 'API 키 직접 연결'}
                                 </h3>
                                 <button
                                     onClick={() => setShowManualInput(false)}
@@ -265,6 +293,14 @@ const HomeScreen: React.FC = () => {
                             </div>
                         </div>
                         <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                            {isConnected && (
+                                <button
+                                    onClick={handleClearKey}
+                                    className="px-6 py-3 rounded-xl font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors mr-auto"
+                                >
+                                    연결 해제
+                                </button>
+                            )}
                             <button
                                 onClick={() => setShowManualInput(false)}
                                 className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -275,7 +311,7 @@ const HomeScreen: React.FC = () => {
                                 onClick={handleSaveManualKey}
                                 className="px-6 py-3 rounded-xl font-bold bg-primary text-slate-900 hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all transform active:scale-95"
                             >
-                                연결하기
+                                {isConnected ? '수정하기' : '연결하기'}
                             </button>
                         </div>
                     </div>
