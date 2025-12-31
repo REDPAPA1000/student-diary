@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
-import { GoogleGenAI } from "@google/genai";
+import { useApiKey } from '../contexts/ApiKeyContext';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const SubjectScreen: React.FC = () => {
     // New Focus Options for different student levels
@@ -15,6 +16,7 @@ const SubjectScreen: React.FC = () => {
         "[노력/변화] 기초 학습 노력과 구체적인 행동 변화 격려 (하위권)"
     ];
 
+    const { apiKey } = useApiKey();
     const [prompt, setPrompt] = useState("");
     const [subject, setSubject] = useState("");
     const [attitude, setAttitude] = useState("");
@@ -56,7 +58,7 @@ const SubjectScreen: React.FC = () => {
     ];
 
     const handleGenerate = async () => {
-        if (!process.env.API_KEY) {
+        if (!apiKey) {
             alert("메인 페이지에서 Google API Key를 먼저 설정해주세요.");
             return;
         }
@@ -73,18 +75,8 @@ const SubjectScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-            const inputData = `
-[과목 정보]
-- 과목명: ${subject}
-
-[수업 태도 및 관찰]
-${attitude || "수업 태도가 바르고 성실함"}
-
-[평가 및 탐구 활동 내용 (우수성 포함)]
-${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수성 내용을 창의적으로 생성"}
-            `.trim();
+            // Create a new instance right before call
+            const genAI = new GoogleGenerativeAI(apiKey);
 
             const systemInstruction = `당신은 대한민국 고등학교 교사로서 나이스(NEIS)에 입력할 '교과 세부능력 및 특기사항(세특)'을 작성하는 전문가입니다.
 
@@ -115,18 +107,28 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
 - 주어 생략.
 
 예시 분량 감각 (약 500자 목표):
-(입력: 미적분 문제 풀이 잘함) -> (출력: '도함수의 활용' 단원을 학습하며... (중략) ... 이를 통해 수학적 모델링 역량을 증명하였으며 향후 공학 분야에서의 응용 가능성이 매우 높음.)`;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-pro-preview',
-                contents: inputData,
-                config: {
-                    systemInstruction: systemInstruction,
+(입력: 미적분 문제 풀이 잘함)            const model = genAI.getGenerativeModel({
+                model: 'gemini-1.5-flash',
+                systemInstruction: systemInstruction,
+                generationConfig: {
                     temperature: 0.9,
                 }
             });
 
-            setPrompt(response.text || "생성된 내용이 없습니다.");
+            const activity = `
+            [과목 정보]
+            - 과목명: ${ subject }
+
+            [수업 태도 및 관찰]
+${ attitude || "수업 태도가 바르고 성실함" }
+
+            [평가 및 탐구 활동 내용(우수성 포함)]
+${ details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수성 내용을 창의적으로 생성" }
+            `.trim();
+
+            const result = await model.generateContent(`[과목 및 단원]\n${ subject } \n\n[성취 기준 및 활동]\n${ activity } `);
+            const response = await result.response;
+            setPrompt(response.text());
         } catch (error: any) {
             console.error("AI Generation Error:", error);
             if (error?.message?.includes("Requested entity was not found")) {
@@ -251,7 +253,7 @@ ${details || "해당 과목의 교육과정에 맞는 탐구 활동 및 우수�
                                         <h3 className="text-slate-900 dark:text-white font-bold text-lg">
                                             평가 및 활동 내용
                                             <span className="text-sm font-normal text-slate-500 ml-2">
-                                                ({subject ? `${subject} 핵심 역량` : "우수성"})
+                                                ({subject ? `${ subject } 핵심 역량` : "우수성"})
                                             </span>
                                         </h3>
                                         <span className="text-xs text-slate-400 font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded">심화 탐구</span>

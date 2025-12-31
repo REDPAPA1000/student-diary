@@ -1,9 +1,10 @@
-
+```
 import React, { useState } from 'react';
 import Header from '../components/Header.tsx';
 import ResultPanel from '../components/ResultPanel.tsx';
+import { useApiKey } from '../contexts/ApiKeyContext';
 import { ActivityType } from '../types';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface ActivityItem {
     id: number;
@@ -15,6 +16,7 @@ interface ActivityItem {
 const CreativeScreen: React.FC = () => {
     const [prompt, setPrompt] = useState("");
     // Default to '자율활동'. '봉사활동' is removed.
+    const { apiKey } = useApiKey();
     const [activityType, setActivityType] = useState<ActivityType>("자율활동");
 
     // List State
@@ -80,7 +82,7 @@ const CreativeScreen: React.FC = () => {
     };
 
     const handleGenerate = async () => {
-        if (!process.env.API_KEY) {
+        if (!apiKey) {
             alert("메인 페이지에서 Google API Key를 먼저 설정해주세요.");
             return;
         }
@@ -97,80 +99,78 @@ const CreativeScreen: React.FC = () => {
         const randomVariance = variances[Math.floor(Math.random() * variances.length)];
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const genAI = new GoogleGenerativeAI(apiKey);
 
             // Construct input data from the list
             const activitiesData = activities.map((item, index) => {
                 if (isClub) {
                     // Club: Content only
                     return `
-[활동 ${index + 1}]
-- 활동내용: ${item.content}
-                    `.trim();
+[활동 ${ index + 1 }]
+- 활동내용: ${ item.content }
+`.trim();
                 } else {
                     // Auto/Career: Date, Name, Content
                     return `
-[활동 ${index + 1}]
-- 날짜: ${item.date}
-- 활동명: ${item.name}
-- 활동내용: ${item.content}
-                    `.trim();
+[활동 ${ index + 1 }]
+- 날짜: ${ item.date }
+- 활동명: ${ item.name }
+- 활동내용: ${ item.content }
+`.trim();
                 }
             }).join("\n");
 
             const inputData = `
-[선택된 영역] ${activityType}
+[선택된 영역] ${ activityType }
 
 [입력된 활동 리스트]
-${activitiesData}
-            `.trim();
+${ activitiesData }
+`.trim();
 
             const systemInstruction = `당신은 대한민국 고등학교 교사로서 나이스(NEIS)에 입력할 '창의적 체험활동 특기사항'을 작성하는 전문가입니다.
 입력된 활동 리스트를 바탕으로 생활기록부를 작성하십시오.
 
-### [핵심 목표: 개별화 및 차별화]
-- **중요**: 동일한 활동 리스트라도, 학생마다 느낌과 표현 방식이 달라야 합니다.
-- 이번 작성의 강조점: **"${randomVariance}"**
+###[핵심 목표: 개별화 및 차별화]
+- ** 중요 **: 동일한 활동 리스트라도, 학생마다 느낌과 표현 방식이 달라야 합니다.
+- 이번 작성의 강조점: ** "${randomVariance}" **
 
-### [작성 절대 규칙]
-1. **나열식 작성 (접속사 금지)**:
-   - 활동과 활동 사이에 '이어서', '또한', '그 후' 같은 **접속사를 절대 사용하지 마십시오.**
-   - 앞의 내용이 끝나면 바로 띄어쓰기 한 번 후 다음 활동으로 시작하십시오.
+###[작성 절대 규칙]
+1. ** 나열식 작성(접속사 금지) **:
+- 활동과 활동 사이에 '이어서', '또한', '그 후' 같은 ** 접속사를 절대 사용하지 마십시오.**
+    - 앞의 내용이 끝나면 바로 띄어쓰기 한 번 후 다음 활동으로 시작하십시오.
 
-2. **활동별 작성 형식**:
-   - **동아리활동일 경우**: 
-     - 형식: **구체적 활동 내용 서술 + (AI가 창작한) 배우고 느낀점.**
-     - 별도의 활동명이나 날짜 표기 없이, 자연스러운 문장으로 서술하십시오.
-   - **자율활동 / 진로활동일 경우**: 
-     - 형식: **활동명(날짜) 구체적 활동 내용 + (AI가 창작한) 배우고 느낀점.**
-     - 날짜는 입력된 그대로 소괄호 안에 넣으십시오.
+2. ** 활동별 작성 형식 **:
+   - ** 동아리활동일 경우 **:
+- 형식: ** 구체적 활동 내용 서술 + (AI가 창작한) 배우고 느낀점.**
+    - 별도의 활동명이나 날짜 표기 없이, 자연스러운 문장으로 서술하십시오.
+   - ** 자율활동 / 진로활동일 경우 **:
+- 형식: ** 활동명(날짜) 구체적 활동 내용 + (AI가 창작한) 배우고 느낀점.**
+    - 날짜는 입력된 그대로 소괄호 안에 넣으십시오.
 
-3. **내용 확장 (Sal-butigi)**:
-   - 입력된 '활동내용'은 팩트(Fact) 위주이므로, 이를 교육적인 용어로 다듬고 학생의 **역량**과 **성장**이 드러나도록 문장을 풍성하게 만드십시오.
-   - 각 활동마다 반드시 **느낀점/배운점/변화된 점**을 덧붙여야 합니다.
+3. ** 내용 확장(Sal - butigi) **:
+- 입력된 '활동내용'은 팩트(Fact) 위주이므로, 이를 교육적인 용어로 다듬고 학생의 ** 역량 ** 과 ** 성장 ** 이 드러나도록 문장을 풍성하게 만드십시오.
+   - 각 활동마다 반드시 ** 느낀점 / 배운점 / 변화된 점 ** 을 덧붙여야 합니다.
 
-4. **문체 및 마무리**:
-   - 모든 문장은 명사형 어미('~함.', '~임.')로 종결하십시오.
+4. ** 문체 및 마무리 **:
+- 모든 문장은 명사형 어미('~함.', '~임.')로 종결하십시오.
    - 거창한 미래 포부로 전체를 마무리하지 말고, 마지막 활동의 내용과 감상으로 담백하게 끝내십시오.
-   - 전체 분량은 **공백 포함 1500바이트(약 500자) 내외**로 작성하십시오.
+   - 전체 분량은 ** 공백 포함 1500바이트(약 500자) 내외 ** 로 작성하십시오.
 
-### [출력 예시]
+###[출력 예시]
 (동아리활동 예시 - 활동내용만 입력됨)
-산성비가 식물 성장에 미치는 영향 실험에서 산성도에 따른 콩나물의 생장 속도를 비교 분석함. 실험 데이터를 도표화하여 보고서를 작성하는 과정에서 정보 처리 역량을 기르고, 환경 오염의 심각성을 체감하며 환경 보존을 위한 실천 의지를 다짐함. 굴절 망원경 조작법을 익혀...
+산성비가 식물 성장에 미치는 영향 실험에서 산성도에 따른 콩나물의 생장 속도를 비교 분석함.실험 데이터를 도표화하여 보고서를 작성하는 과정에서 정보 처리 역량을 기르고, 환경 오염의 심각성을 체감하며 환경 보존을 위한 실천 의지를 다짐함.굴절 망원경 조작법을 익혀...
 
-(자율/진로활동 예시 - 날짜, 활동명 포함)
-수학여행(2025.06.04.-2025.06.06.)에서 베트남 다낭과 호이안의 문화유산을 탐방하며... (중략) ...공동체 의식을 함양함. AI 진로 캠프(2025.05.20.)에 참여하여...`;
+(자율 / 진로활동 예시 - 날짜, 활동명 포함)
+수학여행(2025.06.04.- 2025.06.06.)에서 베트남 다낭과 호이안의 문화유산을 탐방하며... (중략) ...공동체 의식을 함양함.AI 진로 캠프(2025.05.20.)에 참여하여...`;
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-3-pro-preview',
-                contents: inputData,
-                config: {
-                    systemInstruction: systemInstruction,
-                    temperature: 0.9,
-                }
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-1.5-flash',
+                systemInstruction: systemInstruction,
             });
 
-            setPrompt(response.text || "생성된 내용이 없습니다.");
+            const result = await model.generateContent(inputData);
+            const response = await result.response;
+            setPrompt(response.text());
         } catch (error: any) {
             console.error("AI Generation Error:", error);
             if (error?.message?.includes("Requested entity was not found")) {
@@ -358,7 +358,7 @@ ${activitiesData}
                                                             <h4 className="font-bold text-slate-900 dark:text-white truncate">{item.name}</h4>
                                                         </div>
                                                     )}
-                                                    <p className={`text-sm text-slate-600 dark:text-slate-400 line-clamp-2 ${isClub ? 'font-medium' : ''}`}>
+                                                    <p className={`text - sm text - slate - 600 dark: text - slate - 400 line - clamp - 2 ${ isClub ? 'font-medium' : '' } `}>
                                                         {item.content}
                                                     </p>
                                                 </div>
