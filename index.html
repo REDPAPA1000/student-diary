@@ -1,30 +1,35 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>생활기록부 프롬프트 생성기</title>
-    
+
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;family=Noto+Sans+KR:wght@100..900&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;family=Noto+Sans+KR:wght@100..900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
-            darkMode: "class", 
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#0df20d", 
+                        primary: "#0df20d",
                         "primary-hover": "#0bc20b",
                         "primary-light": "#e6ffe6",
-                        "background-light": "#f5f6f8", 
-                        "background-dark": "#0f1323", 
-                        "text-main": "#0d1b12", 
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0f1323",
+                        "text-main": "#0d1b12",
                         "text-secondary": "#4c9a66",
-                        
+
                         // Screen 1 Specific (Purple/Indigo)
                         "s1-primary": "#4F46E5",
                         "s1-primary-hover": "#4338CA",
@@ -37,41 +42,27 @@
                         // Screen 4 Specific (Orange)
                         "s4-primary": "#ea580c",
                         "s4-secondary": "#fb923c",
-                    }, 
+                    },
                     fontFamily: {
-                        display: ["Lexend", "sans-serif"], 
+                        display: ["Lexend", "sans-serif"],
                         body: ["Noto Sans KR", "sans-serif"]
-                    }, 
+                    },
                     borderRadius: {
-                        DEFAULT: "0.25rem", 
-                        lg: "0.5rem", 
-                        xl: "0.75rem", 
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
                         full: "9999px"
                     }
                 }
             }
         };
     </script>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "path": "https://esm.sh/path@^0.12.7",
-    "vite": "https://esm.sh/vite@^7.3.0",
-    "url": "https://esm.sh/url@^0.11.4"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
+
 <body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
