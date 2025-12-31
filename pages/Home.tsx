@@ -21,6 +21,11 @@ const HomeScreen: React.FC = () => {
         checkKey();
     }, []);
 
+
+    // UI State for Manual Key Input Modal
+    const [showManualInput, setShowManualInput] = useState(false);
+    const [manualKey, setManualKey] = useState('');
+
     const handleOpenSystemKeyPopup = async () => {
         // @ts-ignore
         if (window.aistudio) {
@@ -33,30 +38,20 @@ const HomeScreen: React.FC = () => {
                 console.error("Failed to open system key selector", err);
             }
         } else {
-            // Fallback for Standard Web Environments
-            const hasKey = window.confirm(
-                "Google Gemini API 키를 보유하고 계신가요?\n\n" +
-                "[확인] 키 입력창 열기\n" +
-                "[취소] 키 발급 페이지(Google AI Studio)로 이동"
-            );
-
-            if (!hasKey) {
-                window.open('https://aistudio.google.com/app/apikey', '_blank');
-                return;
-            }
-
-            const manualKey = prompt("Google Gemini API 키를 입력해주세요 (sk-로 시작하는 키):");
-            if (manualKey) {
-                if (manualKey.startsWith('sk-')) {
-                    localStorage.setItem('gemini_api_key', manualKey);
-                    setIsConnected(true);
-                    alert("Gemini API 키가 성공적으로 등록되었습니다.");
-                    window.location.reload();
-                } else {
-                    alert("올바르지 않은 키 형식입니다. 'sk-'로 시작하는 전체 키를 입력해주세요.");
-                }
-            }
+            // Fallback: Open Manual Input Modal
+            setShowManualInput(true);
         }
+    };
+
+    const handleSaveManualKey = () => {
+        if (!manualKey.trim()) {
+            alert("키를 입력해주세요.");
+            return;
+        }
+        localStorage.setItem('gemini_api_key', manualKey.trim());
+        setIsConnected(true);
+        setShowManualInput(false);
+        window.location.reload();
     };
 
     return (
@@ -216,8 +211,79 @@ const HomeScreen: React.FC = () => {
                     </div>
                 </div>
             </div>
+            {/* Modal for Manual API Key Input */}
+            {showManualInput && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <div className="p-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">vp_key</span>
+                                    API 키 직접 연결
+                                </h3>
+                                <button
+                                    onClick={() => setShowManualInput(false)}
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                                Google AI Studio에서 발급받은 API 키를 입력해주세요.<br />
+                                키는 로컬 환경에만 안전하게 저장됩니다.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
+                                        Gemini API Key
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="password"
+                                            value={manualKey}
+                                            onChange={(e) => setManualKey(e.target.value)}
+                                            placeholder="AIza..."
+                                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-slate-400"
+                                        />
+                                        <a
+                                            href="https://aistudio.google.com/app/apikey"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+                                            title="새로운 키 발급받기"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">add_circle</span>
+                                            <span>키 발급</span>
+                                        </a>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-500 ml-1">
+                                        * Google API 키는 일반적으로 'AIza'로 시작합니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowManualInput(false)}
+                                className="px-6 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleSaveManualKey}
+                                className="px-6 py-3 rounded-xl font-bold bg-primary text-slate-900 hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all transform active:scale-95"
+                            >
+                                연결하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default HomeScreen;
+```
